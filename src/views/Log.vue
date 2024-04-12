@@ -1,3 +1,7 @@
+<!--
+ * @Description: LOGIN THREE
+ * @author: 丁艺伟
+-->
 <template>
   <div id="login_three"></div>
   <!-- <img :src="groundImg" /> -->
@@ -8,6 +12,8 @@ import * as THREE from 'three'
 import { onMounted } from 'vue'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import _ from 'lodash'
+import { id } from 'element-plus/es/locale/index.mjs'
+import TWEEN from '@tweenjs/tween.js'
 
 //容器
 let loginThree
@@ -20,6 +26,7 @@ let starflake1Img = new URL('../assets/images/starflake1.png', import.meta.url).
 let starflake2Img = new URL('../assets/images/starflake2.png', import.meta.url).href
 let cloudImg = new URL('../assets/images/cloud.png', import.meta.url).href
 let groundImg = new URL('../assets/images/ground.png', import.meta.url).href
+let loginHumanImg = new URL('../assets/images/login_human.png', import.meta.url).href
 let width
 let height
 let depth = 1400
@@ -33,6 +40,8 @@ let controls
 let camera
 // 球体网格
 let sphereMesh
+// 宇航员网格
+let manGroundMesh
 // 点的初始参数
 let parameters
 // 材质
@@ -52,6 +61,8 @@ let cloud_mesh_second
 // 星云运动的渲染函数
 let render_cloud_fun_first
 let render_cloud_fun_second
+// 宇航员浮动数值
+let man_float_num = 0
 
 onMounted(() => {
   loginThree = document.getElementById('login_three')
@@ -89,6 +100,7 @@ onMounted(() => {
     0.008
   )
   initGround()
+  initSpaceman()
   initRenderer()
   initOrbitControls()
   animate()
@@ -295,7 +307,30 @@ const initGround = () => {
   groundMesh.position.y = -height / 3
   scene.add(groundMesh)
 }
-
+// 添加宇航员
+const initSpaceman = () => {
+  // 创建平面缓冲几何体
+  const geometry = new THREE.PlaneGeometry(200, 280)
+  // 创建背景
+  const textureLoader = new THREE.TextureLoader().load(loginHumanImg)
+  // 添加材质
+  const groundMaterial = new THREE.MeshBasicMaterial({
+    map: textureLoader,
+    transparent: true, // 背景透明
+    depthTest: false, // 深度测试
+    side: THREE.DoubleSide
+  })
+  manGroundMesh = new THREE.Mesh(geometry, groundMaterial)
+  manGroundMesh.position.y = -height / 10
+  manGroundMesh.position.x = width / 15
+  scene.add(manGroundMesh)
+}
+// 宇航员浮动效果
+const renderSphereRotateManGroundMesh = () => {
+  const now = Date.now()
+  // Math.sin接受一个以弧度为单位的角度作为参数，并返回该角度的正弦值。正弦值的范围是从 -1 到 1
+  manGroundMesh.position.y = Math.sin(now * 0.001) * 20 + 5
+}
 // 渲染器
 const initRenderer = () => {
   renderer = new THREE.WebGLRenderer()
@@ -310,12 +345,14 @@ const initOrbitControls = () => {
 }
 
 const animate = () => {
+  TWEEN.update() //tween更新
   requestAnimationFrame(animate)
 
   // required if controls.enableDamping or controls.autoRotate are set to true
   // controls.update()
   renderSphereRotate()
   renderStarMove()
+  renderSphereRotateManGroundMesh()
   render_cloud_fun_first()
   render_cloud_fun_second()
   renderer.render(scene, camera)
